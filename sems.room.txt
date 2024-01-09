@@ -1,0 +1,77 @@
+#include <DHT.h>
+#include <LiquidCrystal_I2C.h>
+
+// Define sensor pins
+#define DHTPIN 2        // Pin where the DHT sensor is connected
+#define MOTION_PIN 3     // Pin for motion sensor
+#define LDR_PIN A0       // Pin for light-dependent resistor (LDR)
+#define LED_PIN 4        // Pin for the LED
+#define FAN_MOTOR_PIN 5  // Pin for the fan motor control (L298N input pin)
+
+// Define LCD settings
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // Address 0x27, 16 columns and 2 rows
+
+// Create DHT sensor object
+DHT dht(DHTPIN, DHT11);
+
+// Define safe temperature threshold for humans
+#define SAFE_TEMPERATURE 25.0
+#define Temp 17.60 
+void setup() {
+  lcd.init();  // Initialize the LCD
+  lcd.backlight();
+  pinMode(MOTION_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(FAN_MOTOR_PIN, OUTPUT);
+
+  // Display welcome message on LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("WELCOME...");
+  lcd.setCursor(0, 1);
+  delay(5000);  // Display welcome message for 3 seconds
+}
+
+void loop() {
+  // Read temperature from DHT sensor
+  float temperature = dht.readTemperature();
+
+  // Read motion sensor
+  int motionValue = digitalRead(MOTION_PIN);
+
+  // Read light level from LDR
+  int lightLevel = analogRead(LDR_PIN);
+
+  // Display temperature on LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Temp: ");
+  lcd.print(Temp);
+  lcd.print(" C");
+  lcd.setCursor(0, 1);
+  lcd.print("Light level:");
+  lcd.print(lightLevel);
+
+  // Control the fan based on temperature
+  if (Temp > SAFE_TEMPERATURE) {
+    // Turn on the fan (assuming L298N motor driver)
+    analogWrite(FAN_MOTOR_PIN, 255);  // Full speed, adjust as needed
+  } else {
+    // Turn off the fan
+    analogWrite(FAN_MOTOR_PIN, 0);
+  }
+
+  // Control the LED lights based on motion and light level
+  if (motionValue == HIGH & lightLevel >= 100) {
+    // Turn on LED when motion is detected
+    digitalWrite(LED_PIN, HIGH);
+  } else if (motionValue == LOW & lightLevel < 100){
+    // Turn on LED when it's dark and their is motion
+    
+  } else {
+    // Turn off LED otherwise
+    digitalWrite(LED_PIN, LOW);
+  }
+
+  delay(3000);  // Adjust delay as needed for your application
+}
